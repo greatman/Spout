@@ -46,6 +46,7 @@ import org.spout.engine.entity.SpoutPlayer;
 public class SpoutServerSession<T extends SpoutServer> extends SpoutSession<T> implements ServerSession {
 	public SpoutServerSession(T engine, Channel channel, Protocol bootstrapProtocol) {
 		super(engine, channel, bootstrapProtocol);
+		Thread.dumpStack();
 	}
 
 	public String getDefaultLeaveMessage() {
@@ -69,6 +70,8 @@ public class SpoutServerSession<T extends SpoutServer> extends SpoutSession<T> i
 
 	@Override
 	public boolean disconnect(boolean kick, boolean stop, String reason) {
+		super.disconnect(kick, stop, reason);
+		Thread.dumpStack();
 		if (getPlayer() != null) {
 			PlayerLeaveEvent event;
 			if (kick) {
@@ -94,12 +97,6 @@ public class SpoutServerSession<T extends SpoutServer> extends SpoutSession<T> i
 			getChannel().close();
 		}
 		return true;
-	}
-
-	@Override
-	public void dispose() {
-		super.dispose();
-		dispose(new PlayerLeaveEvent(getPlayer(), getDefaultLeaveMessage()), false);
 	}
 
 	public void dispose(PlayerLeaveEvent leaveEvent, boolean stop) {

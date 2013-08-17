@@ -55,16 +55,6 @@ public class SpoutClientSession extends SpoutSession<SpoutClient> implements Cli
 		super(engine, channel, bootstrapProtocol);
 	}
 
-	@Override
-	public void dispose() {
-		activeWorld.set(null);
-		SpoutPlayer player = getPlayer();
-		if (player != null) {
-			player.disconnect(false);
-		}
-		getEngine().disconnected();
-	}
-
 	public World getActiveWorld() {
 		return activeWorld.get();
 	}
@@ -81,6 +71,7 @@ public class SpoutClientSession extends SpoutSession<SpoutClient> implements Cli
 
 	@Override
 	public boolean disconnect(boolean kick, boolean stop, String reason) {
+		activeWorld.set(null);
 		SpoutPlayer player = getPlayer();
 		if (player != null) {
 			player.sendCommand("disconnect", reason);

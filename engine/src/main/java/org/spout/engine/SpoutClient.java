@@ -287,7 +287,7 @@ public class SpoutClient extends SpoutEngine implements Client {
 			return false;
 		}
 
-		player.get().getNetwork().getSession().dispose();
+		player.get().getNetwork().getSession().disconnect("Spout shutting down");
 
 		// De-init OpenAL
 		soundManager.destroy();
