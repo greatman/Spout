@@ -32,6 +32,9 @@ import java.util.logging.Level;
 import io.netty.channel.Channel;
 
 import org.spout.api.Engine;
+import static org.spout.api.Platform.CLIENT;
+import static org.spout.api.Platform.PROXY;
+import static org.spout.api.Platform.SERVER;
 import org.spout.api.Spout;
 import org.spout.api.datatable.SerializableMap;
 import org.spout.api.entity.Player;
@@ -54,6 +57,11 @@ public interface Session {
 	 * @param message message to be processed
 	 */
 	public <T extends Message> void messageReceivedOnAuxChannel(Channel auxChannel, T message);
+
+	/**
+	 * Disposes of this session by destroying the associated player, if there is one.
+	 */
+	public void dispose();
 
 	/**
 	 * Gets the protocol associated with this session.
@@ -107,21 +115,12 @@ public interface Session {
 	public void sendAll(boolean force, Message... messages);
 
 	/**
-	 * Disconnects the player as a kick. This is equivalent to calling disconnect(reason, true)
+	 * Disconnects the player as a kick.
 	 *
 	 * @param reason The reason for disconnection
 	 * @return Whether the player was actually disconnected
 	 */
 	public boolean disconnect(String reason);
-
-	/**
-	 * Disconnects the session with the specified reason. When the kick packet has been delivered, the channel is closed.
-	 *
-	 * @param reason The reason for disconnection.
-	 * @param kick Whether this disconnection is caused by the player being kicked or the player quitting Disconnects are only cancellable when the disconnection is a kick
-	 * @return Whether the player was actually disconnected. This can be false if the kick event is cancelled or errors occur
-	 */
-	public boolean disconnect(boolean kick, String reason);
 
 	/**
 	 * Returns the address of this session.
@@ -196,9 +195,15 @@ public interface Session {
 	/**
 	 * True if this session is open and connected. If the session is closed, all packets will be silently ignored.
 	 *
-	 * @return is connected
+	 * @return is active
 	 */
-	public boolean isConnected();
+	public boolean isActive();
+
+	/**
+	 * True if disconnect has been called on this session.
+	 * @return if disconnect has been called
+	 */
+	public boolean isDisconnected();
 
 	public interface UncaughtExceptionHandler {
 		/**
@@ -238,7 +243,7 @@ public interface Session {
 		public void uncaughtException(Message message, MessageHandler<?> handle, Exception ex) {
 			Spout.getEngine().getLogger().log(Level.SEVERE, "Message handler for " + message.getClass().getSimpleName() + " threw exception for player " + (session.getPlayer() != null ? session.getPlayer().getName() : "null"));
 			ex.printStackTrace();
-			session.disconnect(false, "Message handler exception for " + message.getClass().getSimpleName());
+			session.disconnect("Message handler exception for " + message.getClass().getSimpleName());
 		}
 	}
 

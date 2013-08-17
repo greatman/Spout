@@ -91,9 +91,9 @@ public abstract class SpoutSession<T extends SpoutEngine> implements Session {
 	 */
 	private State state = State.EXCHANGE_HANDSHAKE;
 	/**
-	 * Stores if this is Connected TODO: Probably add to SpoutAPI
+	 * Stores if this Session has had disconnect called
 	 */
-	protected boolean isConnected = false;
+	protected boolean isDisconnected = false;
 	/**
 	 * Default uncaught exception handler
 	 */
@@ -110,7 +110,6 @@ public abstract class SpoutSession<T extends SpoutEngine> implements Session {
 		this.engine = engine;
 		this.channel = channel;
 		this.protocol = new AtomicReference<>(bootstrapProtocol);
-		this.isConnected = true;
 		this.exceptionHandler = new AtomicReference<UncaughtExceptionHandler>(new DefaultUncaughtExceptionHandler(this));
 	}
 
@@ -230,7 +229,7 @@ public abstract class SpoutSession<T extends SpoutEngine> implements Session {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			disconnect(false, "Socket Error!");
+			disconnect("Socket Error!");
 		}
 	}
 
@@ -302,8 +301,13 @@ public abstract class SpoutSession<T extends SpoutEngine> implements Session {
 	}
 
 	@Override
-	public boolean isConnected() {
-		return channel.isOpen();
+	public boolean isActive() {
+		return channel.isActive();
+	}
+
+	@Override
+	public boolean isDisconnected() {
+		return isDisconnected;
 	}
 
 	@Override
@@ -327,6 +331,13 @@ public abstract class SpoutSession<T extends SpoutEngine> implements Session {
 	}
 
 	@Override
+	public void dispose() {
+		if (SpoutConfiguration.SHOW_CONNECTIONS.getBoolean()) {
+			engine.getLogger().info("Channel disconnected: " + channel + ".");
+		}
+	}
+
+	@Override
 	public void setUncaughtExceptionHandler(UncaughtExceptionHandler handler) {
 		if (handler != null) {
 			exceptionHandler.set(handler);
@@ -337,13 +348,6 @@ public abstract class SpoutSession<T extends SpoutEngine> implements Session {
 
 	public Channel getChannel() {
 		return channel;
-	}
-
-	public boolean disconnect(boolean kick, boolean stop, String reason) {
-		if (SpoutConfiguration.SHOW_CONNECTIONS.getBoolean()) {
-			engine.getLogger().info("Channel disconnected: " + channel + ".");
-		}
-		return true;
 	}
 
 	@Override

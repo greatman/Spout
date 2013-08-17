@@ -55,29 +55,24 @@ public class SpoutClientSession extends SpoutSession<SpoutClient> implements Cli
 		super(engine, channel, bootstrapProtocol);
 	}
 
-	public World getActiveWorld() {
-		return activeWorld.get();
-	}
-
 	@Override
 	public boolean disconnect(String reason) {
-		return disconnect(true, reason);
-	}
-
-	@Override
-	public boolean disconnect(boolean kick, String reason) {
-		return disconnect(kick, false, reason);
-	}
-
-	@Override
-	public boolean disconnect(boolean kick, boolean stop, String reason) {
+		if (isDisconnected()) {
+			throw new IllegalStateException("Tried to disconnect a session that has already been disconnected!");
+		}
+		isDisconnected = true;
 		activeWorld.set(null);
 		SpoutPlayer player = getPlayer();
-		if (player != null) {
-			player.sendCommand("disconnect", reason);
-			return true;
+		if (player == null) {
+			throw new IllegalStateException("Tried to disconnect a session with a null player!");
 		}
-		return false;
+		player.disconnect(false);
+		getEngine().disconnected();
+		return true;
+	}
+
+	public World getActiveWorld() {
+		return activeWorld.get();
 	}
 
 	public PortBinding getActiveAddress() {

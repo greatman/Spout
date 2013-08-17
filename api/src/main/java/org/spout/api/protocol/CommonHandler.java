@@ -110,8 +110,8 @@ public class CommonHandler extends SimpleChannelInboundHandler<Message> {
 				server.getSessionRegistry().remove(session);
 			}
 
-			if (session.isPrimary(c) && session.isConnected()) {
-				session.disconnect(null);
+			if (session.isPrimary(c)) {
+				session.dispose();
 			}
 		} catch (Exception ex) {
 			throw new RuntimeException("Exception thrown when disconnecting", ex);
@@ -131,18 +131,7 @@ public class CommonHandler extends SimpleChannelInboundHandler<Message> {
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
 		Channel c = ctx.channel();
-		if (c.isOpen()) {
-			Session session = this.session.get();
-
-			if (!onClient) {
-				Server server = (Server) engine;
-				server.getChannelGroup().remove(c);
-				server.getSessionRegistry().remove(session);
-			}
-
-			if (session.isPrimary(c) && session.isConnected()) {
-				session.disconnect(null);
-			}
+		if (c.isActive()) {
 			engine.getLogger().log(Level.WARNING, "Exception caught, closing channel: " + c + "...", cause);
 			c.close();
 		}
